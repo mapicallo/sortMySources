@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactDOM from 'react-dom/client';
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Reference, ReferenceSearchHit, Topic } from '@sortmysources/core';
 import {
   addUrlReference,
@@ -15,13 +14,13 @@ import {
   recentUniqueUrlReferences,
   searchReferencesAllMaps,
 } from '@sortmysources/core';
-
-/** Brand purple used for primary controls (matches maqueta). */
+import { useI18n } from './i18n-context';
 const purple = '#4f46e5';
 const purpleHi = '#6366f1';
 const slate = '#334155';
 
-function PopupApp() {
+export function SortMySourcesPanelContent() {
+  const { messages: m } = useI18n();
   const db = useMemo(() => createDb(), []);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicId, setTopicId] = useState('');
@@ -140,7 +139,7 @@ function PopupApp() {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setMsg('Backup downloaded');
+        setMsg(m.backupDownloaded);
       } finally {
         window.setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
@@ -155,11 +154,11 @@ function PopupApp() {
     try {
       const text = await f.text();
       const snap = parseExportedSnapshot(text);
-      if (!window.confirm('Replace all data in this extension with this backup?')) return;
+      if (!window.confirm(m.importConfirm)) return;
       await importAll(db, snap);
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
-      setMsg('Backup imported ✓');
+      setMsg(m.backupImported);
       setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -177,7 +176,7 @@ function PopupApp() {
       topicIdRef.current = t.id;
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
-      setMsg(`Created map "${t.name}"`);
+      setMsg(m.createdMap(t.name));
       setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -189,11 +188,11 @@ function PopupApp() {
     setMsg(null);
     try {
       if (!topicIdRef.current) {
-        setErr('Select or create a map first.');
+        setErr(m.errSelectMap);
         return;
       }
       if (activeTabOk === false) {
-        setErr('Active tab must be http(s)');
+        setErr(m.errTabHttpShort);
         return;
       }
       if (activeTabOk === null) {
@@ -202,7 +201,7 @@ function PopupApp() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       const u = tab?.url;
       if (!u?.startsWith('http://') && !u?.startsWith('https://')) {
-        setErr('Active tab must be http(s)');
+        setErr(m.errTabHttpShort);
         return;
       }
       const title = tab.title?.trim() || new URL(u).hostname;
@@ -210,7 +209,7 @@ function PopupApp() {
       await addUrlReference(db, tid, { url: u, title });
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
-      setMsg('Added current tab ✓');
+      setMsg(m.addedTabDone);
       setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -231,7 +230,7 @@ function PopupApp() {
       await deleteUrlReferenceGroup(db, r);
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
-      setMsg(before > 1 ? `Removed ${before} links (same URL)` : 'Removed link');
+      setMsg(before > 1 ? m.removedSameUrlLinks(before) : m.removedLink);
       window.setTimeout(() => setMsg(null), 2500);
       setDataRevision((n) => n + 1);
     } catch (e2) {
@@ -241,7 +240,7 @@ function PopupApp() {
 
   const showHttpHint = activeTabOk === false;
 
-  const btnGhost: React.CSSProperties = {
+  const btnGhost: CSSProperties = {
     flex: 1,
     cursor: 'pointer',
     borderRadius: 6,
@@ -254,21 +253,17 @@ function PopupApp() {
   };
 
   return (
-    <div style={{ padding: '12px 14px 14px' }}>
-      <h2 style={{ margin: '0 0 8px', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
-        SortMySources
-      </h2>
-
-      <div style={{ fontSize: 12, marginBottom: 12, color: '#64748b', lineHeight: 1.45 }}>
-        Saves locally in this extension (IndexedDB). Use Backup below to sync with the PWA.
+    <div style={{ padding: '4px 0 8px', maxWidth: '100%' }}>
+      <div style={{ fontSize: 12, marginBottom: 12, color: '#57534e', lineHeight: 1.45 }}>
+        {m.subtitle}
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         <button type="button" onClick={() => void handleExportBackup()} style={btnGhost}>
-          Export JSON
+          {m.exportJson}
         </button>
         <button type="button" onClick={() => importRef.current?.click()} style={btnGhost}>
-          Import JSON
+          {m.importJson}
         </button>
       </div>
       <input
@@ -284,11 +279,11 @@ function PopupApp() {
       />
 
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: slate, marginBottom: 6 }}>Search all maps</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: slate, marginBottom: 6 }}>{m.searchLabel}</div>
         <input
           type="search"
           value={searchQuery}
-          placeholder="Title, URL, note, map name…"
+          placeholder={m.searchPlaceholder}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
             width: '100%',
@@ -297,6 +292,7 @@ function PopupApp() {
             borderRadius: 6,
             border: '1px solid #cbd5e1',
             fontSize: 12,
+            background: '#fff',
           }}
           autoCapitalize="off"
           autoCorrect="off"
@@ -305,7 +301,7 @@ function PopupApp() {
         {searchQuery.trim()
           ? searchHits.length === 0
             ? (
-                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>No matches.</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>{m.noMatches}</div>
               )
             : (
                 <ul
@@ -354,7 +350,7 @@ function PopupApp() {
                       </div>
                       <button
                         type="button"
-                        title="Show this map in the list below"
+                        title={m.showMapTitle}
                         onClick={() => switchToMap(t.id)}
                         style={{
                           flexShrink: 0,
@@ -368,7 +364,7 @@ function PopupApp() {
                           color: slate,
                         }}
                       >
-                        Map
+                        {m.mapBtn}
                       </button>
                     </li>
                   ))}
@@ -378,7 +374,7 @@ function PopupApp() {
       </div>
 
       <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: slate }}>
-        Map
+        {m.mapPickerLabel}
         <select
           value={topicId}
           onChange={(e) => switchToMap(e.target.value)}
@@ -392,7 +388,7 @@ function PopupApp() {
             fontSize: 13,
           }}
         >
-          <option value="">Select…</option>
+          <option value="">{m.selectMap}</option>
           {topics.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -401,9 +397,9 @@ function PopupApp() {
         </select>
       </label>
 
-      <div style={{ fontSize: 11, fontWeight: 600, color: slate, marginBottom: 6 }}>Recent in this map</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: slate, marginBottom: 6 }}>{m.recentLabel}</div>
       {previewRefs.length === 0 ? (
-        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 12 }}>No references yet.</div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 12 }}>{m.noRecent}</div>
       ) : (
         <ul style={{ margin: '0 0 12px', padding: 0, listStyle: 'none', maxHeight: 120, overflowY: 'auto' }}>
           {previewRefs.map((r) => (
@@ -441,8 +437,8 @@ function PopupApp() {
               </button>
               <button
                 type="button"
-                aria-label={`Remove ${r.title}`}
-                title="Remove from map"
+                aria-label={`${m.removeFromMapTooltip}: ${r.title}`}
+                title={m.removeFromMapTooltip}
                 onClick={() => void removePreviewRef(r)}
                 style={{
                   flexShrink: 0,
@@ -469,7 +465,7 @@ function PopupApp() {
           <input
             value={newTopicName}
             onChange={(e) => setNewTopicName(e.target.value)}
-            placeholder="New map..."
+            placeholder={m.newMapPlaceholder}
             style={{
               flex: 1,
               padding: '8px 10px',
@@ -477,11 +473,12 @@ function PopupApp() {
               border: '1px solid #cbd5e1',
               fontSize: 13,
               minWidth: 0,
+              background: '#fff',
             }}
           />
           <button
             type="submit"
-            title="Add map"
+            title={m.addMapTitle}
             style={{
               flexShrink: 0,
               width: 40,
@@ -520,27 +517,28 @@ function PopupApp() {
           boxShadow: '0 1px 2px rgba(79,70,229,0.25)',
         }}
       >
-        Add current tab
+        {m.addCurrentTab}
       </button>
 
       {showHttpHint ? (
         <p style={{ color: '#b91c1c', fontSize: 12, margin: '10px 0 0', minHeight: 18 }}>
-          Active tab must be http(s)
+          {m.tabMustHttp}
         </p>
       ) : (
         <div style={{ marginTop: 10, minHeight: 18 }} />
       )}
 
       {msg ? <p style={{ color: '#166534', fontSize: 12, marginTop: 6 }}>{msg}</p> : null}
-      {err && !(showHttpHint && err.includes('Active tab')) ? (
+      {err &&
+      !(
+        showHttpHint &&
+        (/active tab/i.test(err) || /pestaña activa|debe ser http/i.test(err))
+      ) ? (
         <p style={{ color: '#b91c1c', fontSize: 12, marginTop: 6 }}>{err}</p>
       ) : null}
 
-      <p style={{ marginTop: 14, fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>
-        Full editing and lists live in the PWA. Extension and PWA storage stay separate unless you exchange JSON backups.
-      </p>
+      <p style={{ marginTop: 14, fontSize: 11, color: '#78716c', lineHeight: 1.45 }}>{m.footerPwaHint}</p>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<PopupApp />);

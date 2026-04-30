@@ -20,7 +20,10 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
-      input: path.resolve(root, 'popup.html'),
+      input: {
+        panel: path.resolve(root, 'panel.html'),
+        background: path.resolve(root, 'src/background.ts'),
+      },
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/chunks/[name]-[hash].js',
