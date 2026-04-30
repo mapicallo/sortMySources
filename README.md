@@ -29,7 +29,8 @@ npm run build
 ## Core rules (v0.2)
 
 - **Map names** are unique ignoring case; creating or renaming to a duplicate fails with a clear message.
-- **URLs** are not duplicated inside the same map (same normalized `http(s)` URL).
+- **URLs** are not duplicated inside the same map: we store a **canonical http(s) form** (lowercase host, no `#fragment`, no useless trailing slash except root) and refuse adds that match an existing row.
+- Legacy rows that look like duplicates still appear as one line in the **extension popup** preview; **Remove (×)** clears every row in that map that matches the same canonical URL.
 ## Env (PWA GitHub Pages)
 
 `apps/pwa/.env.production`:

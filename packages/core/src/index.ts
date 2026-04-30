@@ -8,8 +8,11 @@ export {
   addUrlReference,
   listReferences,
   deleteReference,
+  deleteUrlReferenceGroup,
   updateReferenceMeta,
   exportAll,
   importAll,
   parseExportedSnapshot,
+  referenceUrlIdentity,
+  recentUniqueUrlReferences,
 } from './repo.js';

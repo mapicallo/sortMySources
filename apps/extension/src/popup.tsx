@@ -5,12 +5,14 @@ import {
   addUrlReference,
   createDb,
   createTopic,
-  deleteReference,
+  deleteUrlReferenceGroup,
   exportAll,
   importAll,
   listReferences,
   listTopics,
   parseExportedSnapshot,
+  referenceUrlIdentity,
+  recentUniqueUrlReferences,
 } from '@sortmysources/core';
 
 /** Brand purple used for primary controls (matches maqueta). */
@@ -51,7 +53,7 @@ function PopupApp() {
         return;
       }
       const all = await listReferences(db, topicId);
-      if (!cancelled) setPreviewRefs(all.slice(-5).reverse());
+      if (!cancelled) setPreviewRefs(recentUniqueUrlReferences(all, 5));
     }
     void loadPreview();
     return () => {
@@ -170,14 +172,21 @@ function PopupApp() {
     }
   }
 
-  async function removePreviewRef(id: string) {
+  async function removePreviewRef(r: Reference) {
     setErr(null);
     setMsg(null);
     try {
-      await deleteReference(db, id);
+      const k = referenceUrlIdentity(r.url);
+      const before =
+        k !== null
+          ? (await listReferences(db, r.topicId)).filter(
+              (x) => x.type === 'url' && referenceUrlIdentity(x.url) === k,
+            ).length
+          : 1;
+      await deleteUrlReferenceGroup(db, r);
       await reload();
-      setMsg('Removed link');
-      window.setTimeout(() => setMsg(null), 2000);
+      setMsg(before > 1 ? `Removed ${before} links (same URL)` : 'Removed link');
+      window.setTimeout(() => setMsg(null), 2500);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     }
@@ -293,7 +302,7 @@ function PopupApp() {
                 type="button"
                 aria-label={`Remove ${r.title}`}
                 title="Remove from map"
-                onClick={() => void removePreviewRef(r.id)}
+                onClick={() => void removePreviewRef(r)}
                 style={{
                   flexShrink: 0,
                   width: 22,
