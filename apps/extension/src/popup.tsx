@@ -33,33 +33,33 @@ function PopupApp() {
   /** null = still checking */
   const [activeTabOk, setActiveTabOk] = useState<boolean | null>(null);
 
-  const reload = useCallback(async () => {
+  const loadPreviewRefs = useCallback(async (tid: string) => {
+    if (!tid) {
+      setPreviewRefs([]);
+      return;
+    }
+    const all = await listReferences(db, tid);
+    setPreviewRefs(recentUniqueUrlReferences(all, 5));
+  }, [db]);
+
+  /** Returns the resolved selected map id after syncing topic list state. */
+  const reloadTopics = useCallback(async (): Promise<string> => {
     const ts = await listTopics(db);
     setTopics(ts);
-    setTopicId((prev) =>
-      prev && ts.some((t) => t.id === prev) ? prev : ts[0]?.id ?? '',
-    );
+    let nextId = '';
+    setTopicId((prev) => {
+      nextId = prev && ts.some((t) => t.id === prev) ? prev : ts[0]?.id ?? '';
+      return nextId;
+    });
+    return nextId;
   }, [db]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadPreview() {
-      if (!topicId) {
-        if (!cancelled) setPreviewRefs([]);
-        return;
-      }
-      const all = await listReferences(db, topicId);
-      if (!cancelled) setPreviewRefs(recentUniqueUrlReferences(all, 5));
-    }
-    void loadPreview();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, topicId]);
+    void (async () => {
+      const tid = await reloadTopics();
+      await loadPreviewRefs(tid);
+    })();
+  }, [reloadTopics, loadPreviewRefs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +120,8 @@ function PopupApp() {
       const snap = parseExportedSnapshot(text);
       if (!window.confirm('Replace all data in this extension with this backup?')) return;
       await importAll(db, snap);
-      await reload();
+      const nid = await reloadTopics();
+      await loadPreviewRefs(nid);
       setMsg('Backup imported ✓');
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -135,7 +136,8 @@ function PopupApp() {
       const t = await createTopic(db, newTopicName);
       setNewTopicName('');
       setTopicId(t.id);
-      await reload();
+      const nid = await reloadTopics();
+      await loadPreviewRefs(nid);
       setMsg(`Created map "${t.name}"`);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -165,7 +167,8 @@ function PopupApp() {
       }
       const title = tab.title?.trim() || new URL(u).hostname;
       await addUrlReference(db, topicId, { url: u, title });
-      await reload();
+      const nid = await reloadTopics();
+      await loadPreviewRefs(nid);
       setMsg('Added current tab ✓');
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
@@ -184,7 +187,8 @@ function PopupApp() {
             ).length
           : 1;
       await deleteUrlReferenceGroup(db, r);
-      await reload();
+      const nid = await reloadTopics();
+      await loadPreviewRefs(nid);
       setMsg(before > 1 ? `Removed ${before} links (same URL)` : 'Removed link');
       window.setTimeout(() => setMsg(null), 2500);
     } catch (e2) {
@@ -240,7 +244,11 @@ function PopupApp() {
         Map
         <select
           value={topicId}
-          onChange={(e) => setTopicId(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setTopicId(v);
+            void loadPreviewRefs(v);
+          }}
           style={{
             width: '100%',
             marginTop: 6,
