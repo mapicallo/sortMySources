@@ -8,7 +8,7 @@ Maps (topics) of heterogeneous references — start with **URLs**. **PWA** + **C
 |---------|------|
 | `packages/core` | Types + Dexie DB + CRUD + JSON export/import |
 | `apps/pwa` | Vite React PWA |
-| `apps/extension` | Toolbar popup adds current tab to a topic |
+| `apps/extension` | Toolbar popup: map picker, recent links, backup JSON, add current tab |
 
 ## Dev
 
@@ -22,10 +22,14 @@ npm run dev:ext      # load apps/extension/dist unpacked (build once)
 npm run build
 ```
 
-**Extension:** Chromium → Extensions → Developer mode → Load unpacked → `apps/extension/dist`.
+**Extension:** Chromium → Extensions → Developer mode → Load unpacked → `apps/extension/dist`. The popup includes **Export / Import JSON** (same format as the PWA home screen tools).
 
-> PWA (`https://…`) and extension (`chrome-extension://…`) use **different IndexedDB** origins. Use **Export / Import JSON** on the Settings page (PWA and popup share the same UX pattern later; v1 export is in **PWA footer**).
+> PWA (`https://…`) and extension (`chrome-extension://…`) use **different IndexedDB** origins. Exchange **JSON backups** to move data between them.
 
+## Core rules (v0.2)
+
+- **Map names** are unique ignoring case; creating or renaming to a duplicate fails with a clear message.
+- **URLs** are not duplicated inside the same map (same normalized `http(s)` URL).
 ## Env (PWA GitHub Pages)
 
 `apps/pwa/.env.production`:

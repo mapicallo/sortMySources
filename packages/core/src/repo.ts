@@ -5,9 +5,24 @@ function now(): number {
   return Date.now();
 }
 
+/** Normalize for uniqueness check (v1). */
+function topicNameKey(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+async function topicNameExists(db: SortMySourcesDexie, name: string, excludeTopicId?: string): Promise<boolean> {
+  const key = topicNameKey(name);
+  if (!key) return false;
+  const topics = await db.topics.toArray();
+  return topics.some((t) => t.id !== excludeTopicId && topicNameKey(t.name) === key);
+}
+
 export async function createTopic(db: SortMySourcesDexie, name: string): Promise<Topic> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error('Topic name cannot be empty');
+  if (await topicNameExists(db, trimmed)) {
+    throw new Error('A map with this name already exists');
+  }
   const topic: Topic = {
     id: crypto.randomUUID(),
     name: trimmed,
@@ -25,6 +40,9 @@ export async function renameTopic(db: SortMySourcesDexie, topicId: string, name:
   if (!trimmed) throw new Error('Topic name cannot be empty');
   const t = await db.topics.get(topicId);
   if (!t) throw new Error('Topic not found');
+  if (await topicNameExists(db, trimmed, topicId)) {
+    throw new Error('A map with this name already exists');
+  }
   await db.topics.put({ ...t, name: trimmed, updatedAt: now() });
 }
 
@@ -56,6 +74,10 @@ export async function addUrlReference(
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     throw new Error('Only http(s) URLs are supported');
   }
+
+  const inTopic = await db.references.where('topicId').equals(topicId).toArray();
+  const dup = inTopic.find((r) => r.type === 'url' && r.url === parsed.href);
+  if (dup) throw new Error('That URL is already in this map');
 
   const ref: Reference = {
     id: crypto.randomUUID(),
