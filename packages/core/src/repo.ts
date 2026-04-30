@@ -1,4 +1,4 @@
-import type { ExportedSnapshot, Reference, Topic } from './types.js';
+import type { ExportedSnapshot, Reference, ReferenceSearchHit, Topic } from './types.js';
 import type { SortMySourcesDexie } from './db.js';
 
 function now(): number {
@@ -96,6 +96,29 @@ export async function deleteTopic(db: SortMySourcesDexie, topicId: string): Prom
 
 export async function listTopics(db: SortMySourcesDexie): Promise<Topic[]> {
   return db.topics.orderBy('updatedAt').reverse().toArray();
+}
+
+/** Substring search on title, URL, note, and map name; newest first. */
+export async function searchReferencesAllMaps(
+  db: SortMySourcesDexie,
+  query: string,
+  limit = 25,
+): Promise<ReferenceSearchHit[]> {
+  const q = query.trim().toLowerCase();
+  if (!q || limit <= 0) return [];
+  const [topicRows, refs] = await Promise.all([db.topics.toArray(), db.references.toArray()]);
+  const topicById = new Map(topicRows.map((t) => [t.id, t]));
+  const out: ReferenceSearchHit[] = [];
+  for (const r of refs) {
+    if (r.type !== 'url') continue;
+    const topic = topicById.get(r.topicId);
+    if (!topic) continue;
+    const blob = `${topic.name}\n${r.title}\n${r.url}\n${r.note ?? ''}`.toLowerCase();
+    if (!blob.includes(q)) continue;
+    out.push({ reference: r, topic });
+  }
+  out.sort((a, b) => b.reference.createdAt - a.reference.createdAt);
+  return out.slice(0, limit);
 }
 
 export async function addUrlReference(

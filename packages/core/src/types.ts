@@ -24,3 +24,8 @@ export interface ExportedSnapshot {
   topics: Topic[];
   references: Reference[];
 }
+
+export interface ReferenceSearchHit {
+  reference: Reference;
+  topic: Topic;
+}

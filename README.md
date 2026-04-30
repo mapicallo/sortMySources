@@ -8,7 +8,7 @@ Maps (topics) of heterogeneous references — start with **URLs**. **PWA** + **C
 |---------|------|
 | `packages/core` | Types + Dexie DB + CRUD + JSON export/import |
 | `apps/pwa` | Vite React PWA |
-| `apps/extension` | Toolbar popup: map picker, recent links, backup JSON, add current tab |
+| `apps/extension` | Popup: maps, backup, search across maps, capture tab |
 
 ## Dev
 

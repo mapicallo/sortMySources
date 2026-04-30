@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import type { Reference, Topic } from '@sortmysources/core';
+import type { Reference, ReferenceSearchHit, Topic } from '@sortmysources/core';
 import {
   addUrlReference,
   createDb,
@@ -13,6 +13,7 @@ import {
   parseExportedSnapshot,
   referenceUrlIdentity,
   recentUniqueUrlReferences,
+  searchReferencesAllMaps,
 } from '@sortmysources/core';
 
 /** Brand purple used for primary controls (matches maqueta). */
@@ -25,6 +26,9 @@ function PopupApp() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicId, setTopicId] = useState('');
   const [previewRefs, setPreviewRefs] = useState<Reference[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchHits, setSearchHits] = useState<ReferenceSearchHit[]>([]);
+  const [dataRevision, setDataRevision] = useState(0);
   const [newTopicName, setNewTopicName] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -48,6 +52,15 @@ function PopupApp() {
     setPreviewRefs(recentUniqueUrlReferences(all, 5));
   }, [db]);
 
+  const switchToMap = useCallback(
+    (tid: string) => {
+      topicIdRef.current = tid;
+      setTopicId(tid);
+      void loadPreviewRefs(tid);
+    },
+    [loadPreviewRefs],
+  );
+
   /** Returns selected map id. Uses refs so returning after `await` is not broken by deferred React updates. */
   const reloadTopics = useCallback(async (): Promise<string> => {
     const ts = await listTopics(db);
@@ -65,6 +78,25 @@ function PopupApp() {
       await loadPreviewRefs(tid);
     })();
   }, [reloadTopics, loadPreviewRefs]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchHits([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const hits = await searchReferencesAllMaps(db, q, 25);
+        if (!cancelled) setSearchHits(hits);
+      })();
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery, dataRevision, db]);
 
   useEffect(() => {
     let cancelled = false;
@@ -128,6 +160,7 @@ function PopupApp() {
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
       setMsg('Backup imported ✓');
+      setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     }
@@ -145,6 +178,7 @@ function PopupApp() {
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
       setMsg(`Created map "${t.name}"`);
+      setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     }
@@ -177,6 +211,7 @@ function PopupApp() {
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
       setMsg('Added current tab ✓');
+      setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     }
@@ -198,6 +233,7 @@ function PopupApp() {
       await loadPreviewRefs(nid);
       setMsg(before > 1 ? `Removed ${before} links (same URL)` : 'Removed link');
       window.setTimeout(() => setMsg(null), 2500);
+      setDataRevision((n) => n + 1);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     }
@@ -247,16 +283,105 @@ function PopupApp() {
         }}
       />
 
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: slate, marginBottom: 6 }}>Search all maps</div>
+        <input
+          type="search"
+          value={searchQuery}
+          placeholder="Title, URL, note, map name…"
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '7px 8px',
+            borderRadius: 6,
+            border: '1px solid #cbd5e1',
+            fontSize: 12,
+          }}
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        {searchQuery.trim()
+          ? searchHits.length === 0
+            ? (
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>No matches.</div>
+              )
+            : (
+                <ul
+                  style={{
+                    margin: '8px 0 0',
+                    padding: 0,
+                    listStyle: 'none',
+                    maxHeight: 150,
+                    overflowY: 'auto',
+                    borderTop: '1px solid #e2e8f0',
+                  }}
+                >
+                  {searchHits.map(({ reference: r, topic: t }) => (
+                    <li
+                      key={r.id}
+                      style={{
+                        padding: '6px 0',
+                        borderBottom: '1px solid #f1f5f9',
+                        display: 'flex',
+                        gap: 6,
+                        alignItems: 'flex-start',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 2 }}>{t.name}</div>
+                        <button
+                          type="button"
+                          title={r.title}
+                          onClick={() => chrome.tabs.create({ url: r.url })}
+                          style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: 'transparent',
+                            padding: 0,
+                            textAlign: 'left',
+                            fontSize: 11,
+                            color: '#2563eb',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: '100%',
+                          }}
+                        >
+                          {r.title || r.url}
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        title="Show this map in the list below"
+                        onClick={() => switchToMap(t.id)}
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: '3px 6px',
+                          borderRadius: 4,
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          cursor: 'pointer',
+                          color: slate,
+                        }}
+                      >
+                        Map
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
+          : null}
+      </div>
+
       <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: slate }}>
         Map
         <select
           value={topicId}
-          onChange={(e) => {
-            const v = e.target.value;
-            topicIdRef.current = v;
-            setTopicId(v);
-            void loadPreviewRefs(v);
-          }}
+          onChange={(e) => switchToMap(e.target.value)}
           style={{
             width: '100%',
             marginTop: 6,

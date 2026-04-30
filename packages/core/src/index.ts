@@ -1,4 +1,4 @@
-export type { Topic, Reference, ReferenceType, ExportedSnapshot } from './types.js';
+export type { Topic, Reference, ReferenceType, ExportedSnapshot, ReferenceSearchHit } from './types.js';
 export { SortMySourcesDexie, createDb } from './db.js';
 export {
   createTopic,
@@ -15,4 +15,5 @@ export {
   parseExportedSnapshot,
   referenceUrlIdentity,
   recentUniqueUrlReferences,
+  searchReferencesAllMaps,
 } from './repo.js';
