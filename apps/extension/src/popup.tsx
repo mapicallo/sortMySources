@@ -29,9 +29,15 @@ function PopupApp() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  /** Always in sync with topicId; survives async gaps where React defers setState updaters. */
+  const topicIdRef = useRef('');
 
   /** null = still checking */
   const [activeTabOk, setActiveTabOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    topicIdRef.current = topicId;
+  }, [topicId]);
 
   const loadPreviewRefs = useCallback(async (tid: string) => {
     if (!tid) {
@@ -42,15 +48,14 @@ function PopupApp() {
     setPreviewRefs(recentUniqueUrlReferences(all, 5));
   }, [db]);
 
-  /** Returns the resolved selected map id after syncing topic list state. */
+  /** Returns selected map id. Uses refs so returning after `await` is not broken by deferred React updates. */
   const reloadTopics = useCallback(async (): Promise<string> => {
     const ts = await listTopics(db);
     setTopics(ts);
-    let nextId = '';
-    setTopicId((prev) => {
-      nextId = prev && ts.some((t) => t.id === prev) ? prev : ts[0]?.id ?? '';
-      return nextId;
-    });
+    const prev = topicIdRef.current;
+    const nextId = prev && ts.some((t) => t.id === prev) ? prev : ts[0]?.id ?? '';
+    topicIdRef.current = nextId;
+    setTopicId(nextId);
     return nextId;
   }, [db]);
 
@@ -136,6 +141,7 @@ function PopupApp() {
       const t = await createTopic(db, newTopicName);
       setNewTopicName('');
       setTopicId(t.id);
+      topicIdRef.current = t.id;
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
       setMsg(`Created map "${t.name}"`);
@@ -148,7 +154,7 @@ function PopupApp() {
     setErr(null);
     setMsg(null);
     try {
-      if (!topicId) {
+      if (!topicIdRef.current) {
         setErr('Select or create a map first.');
         return;
       }
@@ -166,7 +172,8 @@ function PopupApp() {
         return;
       }
       const title = tab.title?.trim() || new URL(u).hostname;
-      await addUrlReference(db, topicId, { url: u, title });
+      const tid = topicIdRef.current;
+      await addUrlReference(db, tid, { url: u, title });
       const nid = await reloadTopics();
       await loadPreviewRefs(nid);
       setMsg('Added current tab ✓');
@@ -246,6 +253,7 @@ function PopupApp() {
           value={topicId}
           onChange={(e) => {
             const v = e.target.value;
+            topicIdRef.current = v;
             setTopicId(v);
             void loadPreviewRefs(v);
           }}
