@@ -1,4 +1,4 @@
-import { type MouseEvent as ReactMouseEvent, type ReactNode, useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 import { useI18n } from './i18n-context';
 
 function windowGetSelf(): Promise<chrome.windows.Window | undefined> {
@@ -10,32 +10,6 @@ function windowGetSelf(): Promise<chrome.windows.Window | undefined> {
 export function PanelShell({ children }: { children: ReactNode }) {
   const { locale, setLocale, messages: m } = useI18n();
   const ver = chrome.runtime.getManifest().version;
-  const iconUrl = chrome.runtime.getURL('icons/icon32.png');
-
-  const dragTitleMouseDown = useCallback((ev: ReactMouseEvent<HTMLDivElement>) => {
-    if ((ev.target as HTMLElement).closest('[data-no-drag]')) return;
-    ev.preventDefault();
-    void (async () => {
-      const w = await windowGetSelf();
-      if (!w?.id || w.left == null || w.top == null) return;
-      const sx = ev.screenX;
-      const sy = ev.screenY;
-      const ol = w.left;
-      const ot = w.top;
-      const onMove = (e: MouseEvent) => {
-        void chrome.windows.update(w.id!, {
-          left: Math.round(ol + e.screenX - sx),
-          top: Math.round(ot + e.screenY - sy),
-        });
-      };
-      const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    })();
-  }, []);
 
   const resizeMouseDown = useCallback((ev: React.MouseEvent) => {
     ev.preventDefault();
@@ -61,6 +35,44 @@ export function PanelShell({ children }: { children: ReactNode }) {
     })();
   }, []);
 
+  /** AI4Context brand mark — vertical green bar + filled white circle (matches sister extensions). */
+  const footerBrandMark = (
+    <span
+      aria-hidden
+      style={{
+        position: 'absolute',
+        left: 12,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span
+        style={{
+          width: 5,
+          height: 22,
+          background: '#22c55e',
+          borderRadius: 1,
+          flexShrink: 0,
+          boxShadow: '0 0 0 1px rgba(0,0,0,0.2)',
+        }}
+      />
+      <span
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 9999,
+          background: '#fafafa',
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
+        }}
+      />
+    </span>
+  );
+
   return (
     <div
       style={{
@@ -74,24 +86,6 @@ export function PanelShell({ children }: { children: ReactNode }) {
         position: 'relative',
       }}
     >
-      <div
-        onMouseDown={dragTitleMouseDown}
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 10px',
-          background: 'linear-gradient(180deg, #f2ebe4 0%, #e6ddd2 100%)',
-          borderBottom: '1px solid #cfc4b8',
-          cursor: 'grab',
-          userSelect: 'none',
-        }}
-      >
-        <img src={iconUrl} alt="" width={20} height={20} style={{ flexShrink: 0, pointerEvents: 'none' }} />
-        <span style={{ fontWeight: 700, fontSize: 14, flex: 1, letterSpacing: '-0.02em' }}>SortMySources</span>
-      </div>
-
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
         <div style={{ flex: 1, overflow: 'auto', padding: '10px 12px 8px' }}>
           <div
@@ -164,24 +158,9 @@ export function PanelShell({ children }: { children: ReactNode }) {
           gap: 10,
         }}
       >
-        <span
-          style={{
-            position: 'absolute',
-            left: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-          }}
-        >
-          <span style={{ width: 10, height: 10, borderRadius: 9999, background: '#22c55e' }} />
-          <span
-            style={{ width: 10, height: 10, borderRadius: 9999, border: '2px solid #fafafa', boxSizing: 'border-box' }}
-          />
-        </span>
+        {footerBrandMark}
 
-        <div style={{ paddingLeft: 36, paddingRight: 96, textAlign: 'center' }}>
+        <div style={{ paddingLeft: 44, paddingRight: 96, textAlign: 'center' }}>
           <span style={{ opacity: 0.9 }}>
             {m.byPrefix}
             <strong style={{ color: '#fff' }}>{m.brandStrong}</strong>

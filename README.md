@@ -23,7 +23,7 @@ npm run build
 ```
 
 **Extension:** Chromium → Extensions → Developer mode → **Load unpacked** → `apps/extension/dist`.  
-Click the **toolbar icon** — it opens a **detachable Chrome window** (not the old anchored popup): drag via the beige strip under the **system title bar**, **corner resize**, locale selector, footer with version. Window **minimize / maximize / close** use the **native** controls on the window frame (Chrome only provides one set).  
+Click the **toolbar icon** to open a **detachable window**. Use the **system title bar** to move, minimize, maximize, or close. **Resize** from the corner grip in the content area. Locale + footer match the AI4Context extension line.  
 Use **Export / Import JSON** (same format as the PWA).
 
 

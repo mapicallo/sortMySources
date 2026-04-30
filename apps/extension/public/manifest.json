@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SortMySources",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Maps of sources — floating panel (local IndexedDB, JSON sync with PWA)",
   "action": {
     "default_title": "SortMySources — click to open"
