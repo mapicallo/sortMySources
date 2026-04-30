@@ -23,7 +23,7 @@ npm run build
 ```
 
 **Extension:** Chromium → Extensions → Developer mode → **Load unpacked** → `apps/extension/dist`.  
-Click the **toolbar icon** — it opens a **detachable Chrome window** (not the old anchored popup): drag via the beige title bar, **minimize / maximize**, **corner resize**, locale selector, footer with version.  
+Click the **toolbar icon** — it opens a **detachable Chrome window** (not the old anchored popup): drag via the beige strip under the **system title bar**, **corner resize**, locale selector, footer with version. Window **minimize / maximize / close** use the **native** controls on the window frame (Chrome only provides one set).  
 Use **Export / Import JSON** (same format as the PWA).
 
 

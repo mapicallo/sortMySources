@@ -14,6 +14,7 @@ import {
   recentUniqueUrlReferences,
   searchReferencesAllMaps,
 } from '@sortmysources/core';
+import { getActiveTabInLastNormalWindow } from './active-browser-tab';
 import { useI18n } from './i18n-context';
 const purple = '#4f46e5';
 const purpleHi = '#6366f1';
@@ -101,7 +102,7 @@ export function SortMySourcesPanelContent() {
     let cancelled = false;
     async function checkActiveTabHttp() {
       try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = await getActiveTabInLastNormalWindow();
         const u = tab?.url ?? '';
         const ok = u.startsWith('http://') || u.startsWith('https://');
         if (!cancelled) {
@@ -198,13 +199,13 @@ export function SortMySourcesPanelContent() {
       if (activeTabOk === null) {
         return;
       }
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = await getActiveTabInLastNormalWindow();
       const u = tab?.url;
       if (!u?.startsWith('http://') && !u?.startsWith('https://')) {
         setErr(m.errTabHttpShort);
         return;
       }
-      const title = tab.title?.trim() || new URL(u).hostname;
+      const title = tab?.title?.trim() || new URL(u).hostname;
       const tid = topicIdRef.current;
       await addUrlReference(db, tid, { url: u, title });
       const nid = await reloadTopics();

@@ -1,4 +1,4 @@
-import { type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode, useCallback } from 'react';
+import { type MouseEvent as ReactMouseEvent, type ReactNode, useCallback } from 'react';
 import { useI18n } from './i18n-context';
 
 function windowGetSelf(): Promise<chrome.windows.Window | undefined> {
@@ -6,22 +6,6 @@ function windowGetSelf(): Promise<chrome.windows.Window | undefined> {
     chrome.windows.getCurrent((w) => resolve(w));
   });
 }
-
-const winBtn: CSSProperties = {
-  width: 28,
-  height: 24,
-  border: '1px solid #bfb5a9',
-  borderRadius: 4,
-  background: '#fdfbf8',
-  cursor: 'pointer',
-  fontSize: 13,
-  lineHeight: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: '#444',
-  padding: 0,
-};
 
 export function PanelShell({ children }: { children: ReactNode }) {
   const { locale, setLocale, messages: m } = useI18n();
@@ -77,26 +61,6 @@ export function PanelShell({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const minimize = useCallback(() => {
-    void (async () => {
-      const w = await windowGetSelf();
-      if (w?.id) void chrome.windows.update(w.id, { state: 'minimized' });
-    })();
-  }, []);
-
-  const toggleMaximize = useCallback(() => {
-    void (async () => {
-      const w = await windowGetSelf();
-      if (!w?.id) return;
-      const next = w.state === 'maximized' ? 'normal' : 'maximized';
-      void chrome.windows.update(w.id, { state: next });
-    })();
-  }, []);
-
-  const close = useCallback(() => {
-    window.close();
-  }, []);
-
   return (
     <div
       style={{
@@ -126,17 +90,6 @@ export function PanelShell({ children }: { children: ReactNode }) {
       >
         <img src={iconUrl} alt="" width={20} height={20} style={{ flexShrink: 0, pointerEvents: 'none' }} />
         <span style={{ fontWeight: 700, fontSize: 14, flex: 1, letterSpacing: '-0.02em' }}>SortMySources</span>
-        <span data-no-drag style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <button type="button" data-no-drag style={winBtn} title="Minimize" onClick={minimize}>
-            —
-          </button>
-          <button type="button" data-no-drag style={winBtn} title="Maximize" onClick={toggleMaximize}>
-            □
-          </button>
-          <button type="button" data-no-drag style={{ ...winBtn, fontWeight: 700 }} title="Close" onClick={close}>
-            ×
-          </button>
-        </span>
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
