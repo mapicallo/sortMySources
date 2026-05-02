@@ -29,6 +29,10 @@ Use **Export / Import JSON** (same format as the PWA).
 
 > PWA (`https://…`) and extension (`chrome-extension://…`) use **different IndexedDB** origins. Exchange **JSON backups** to move data between them.
 
+**Privacy policy (Chrome Web Store, etc.):** if GitHub Pages uses the repo **root** as source, use  
+`https://mapicallo.github.io/sortMySources/privacy.html` (file `privacy.html` at repo root).  
+If you deploy only `apps/pwa/dist`, the same path is included after `vite build` via `public/privacy.html`.
+
 ## Core rules (v0.2)
 
 - **Map names** are unique ignoring case; creating or renaming to a duplicate fails with a clear message.
