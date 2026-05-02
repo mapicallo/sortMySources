@@ -1,4 +1,15 @@
-export type { Topic, Reference, ReferenceType, ExportedSnapshot, ReferenceSearchHit } from './types.js';
+export type {
+  Topic,
+  Reference,
+  ReferenceType,
+  ExportedSnapshot,
+  ExportedSnapshotV1,
+  ExportedSnapshotV2,
+  ReferenceSearchHit,
+  UrlReference,
+  SnippetReference,
+  FileReference,
+} from './types.js';
 export { SortMySourcesDexie, createDb } from './db.js';
 export {
   createTopic,
@@ -6,14 +17,21 @@ export {
   deleteTopic,
   listTopics,
   addUrlReference,
+  addSnippetReference,
   listReferences,
   deleteReference,
   deleteUrlReferenceGroup,
   updateReferenceMeta,
   exportAll,
+  exportTopicToSnapshot,
   importAll,
+  importTopicFromSnapshot,
   parseExportedSnapshot,
   referenceUrlIdentity,
+  normalizeImportedReference,
+  recentRefsForPreview,
   recentUniqueUrlReferences,
   searchReferencesAllMaps,
+  buildSnippetHighlightUrl,
+  addFileMetadataReference,
 } from './repo.js';

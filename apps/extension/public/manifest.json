@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SortMySources",
-  "version": "0.3.2",
+  "version": "0.5.0",
   "description": "Maps of sources — floating panel (local IndexedDB, JSON sync with PWA)",
   "action": {
     "default_title": "SortMySources — click to open"
@@ -10,7 +10,8 @@
     "service_worker": "assets/background.js",
     "type": "module"
   },
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

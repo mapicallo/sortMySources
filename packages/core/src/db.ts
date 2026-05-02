@@ -14,6 +14,10 @@ export class SortMySourcesDexie extends Dexie {
       topics: 'id, name, updatedAt',
       references: 'id, topicId, url, createdAt, type',
     });
+    this.version(2).stores({
+      topics: 'id, name, updatedAt',
+      references: 'id, topicId, url, createdAt, type',
+    });
   }
 }
 

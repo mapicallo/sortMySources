@@ -11,6 +11,12 @@ export function PanelShell({ children }: { children: ReactNode }) {
   const { locale, setLocale, messages: m } = useI18n();
   const ver = chrome.runtime.getManifest().version;
 
+  const minimizeSelf = useCallback(() => {
+    void chrome.windows.getCurrent((w) => {
+      if (w?.id != null) void chrome.windows.update(w.id, { state: 'minimized' });
+    });
+  }, []);
+
   const resizeMouseDown = useCallback((ev: React.MouseEvent) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -92,13 +98,45 @@ export function PanelShell({ children }: { children: ReactNode }) {
             data-no-drag
             style={{
               display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'flex-end',
-              gap: 8,
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 10,
               marginBottom: 8,
+              flexWrap: 'wrap',
             }}
           >
-            <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                minWidth: 0,
+                flex: '1 1 160px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={minimizeSelf}
+                title={m.panelMinimizeTitle}
+                style={{
+                  alignSelf: 'flex-start',
+                  cursor: 'pointer',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: '#475569',
+                }}
+              >
+                {m.panelMinimize}
+              </button>
+              <p style={{ margin: 0, fontSize: 10, lineHeight: 1.35, color: '#64748b', maxWidth: 300 }}>
+                {m.panelFloatingHint}
+              </p>
+            </div>
+            <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', flexShrink: 0 }}>
               {m.langLabel}
               <select
                 value={locale}

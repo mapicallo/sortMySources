@@ -65,9 +65,34 @@ export default function TopicsPage() {
       <header className="app-header">
         <div>
           <h1 className="app-title">SortMySources</h1>
-          <p className="app-muted">Maps · URLs first · Stored on this device (IndexedDB)</p>
+          <p className="app-muted">
+            Maps · http(s) URLs and text snippets · Stored on this device (IndexedDB)
+          </p>
         </div>
       </header>
+
+      <section className="card">
+        <h2 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Source kinds we scoped</h2>
+        <p className="app-muted" style={{ margin: '0 0 0.65rem', fontSize: '0.85rem', lineHeight: 1.45 }}>
+          Attachment types for maps: links and snippets are live in the PWA; the extension can add the current tab,
+          capture page selection, or free-form snippets. Bookmarks import is still on the roadmap.
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.85rem', lineHeight: 1.5 }}>
+          <li style={{ marginBottom: '0.35rem' }}>
+            <strong>HTTP(S) links</strong> — available (paste in PWA or use the browser extension panel).
+          </li>
+          <li style={{ marginBottom: '0.35rem' }}>
+            <strong>Plain-text snippets / notes</strong> — available (no webpage required).
+          </li>
+          <li style={{ marginBottom: '0.35rem' }}>
+            <strong>Selection from active page</strong> — available in the browser extension (reads highlighted text
+            on the page into a snippet).
+          </li>
+          <li>
+            <strong>Bookmarks / favorites import</strong> — planned; could populate a map from saved links.
+          </li>
+        </ul>
+      </section>
 
       <section className="card">
         <h2 style={{ margin: '0 0 0.65rem', fontSize: '1rem' }}>New map</h2>
