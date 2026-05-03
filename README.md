@@ -41,6 +41,20 @@ Use **Export / Import JSON** (same format as the PWA).
 
 The live app is **not** the repo `README`: it is built from `apps/pwa` and published by GitHub Actions to the **`gh-pages`** branch.
 
+### If `https://mapicallo.github.io/sortMySources/` looks like this README
+
+GitHub Pages is almost certainly publishing from **`main`** (GitHub turns `README.md` into the site root). Embedded iframes (e.g. on ai4context.com) will show that Markdown page instead of the React PWA.
+
+**Fix:**
+
+1. Open the repo → **Settings** → **Pages**.
+2. **Build and deployment** → Source: **Deploy from a branch** (not “GitHub Actions” unless you’ve wired a different flow).
+3. Branch: **`gh-pages`**, folder: **`/ (root)`** → **Save**.
+4. In **Actions**, ensure **Deploy PWA to GitHub Pages** has run successfully (push to `main` or **Run workflow**). The first run creates / updates `gh-pages`.
+5. Wait a minute and hard-refresh the Pages URL; the built `index.html` from `apps/pwa/dist` should load.
+
+**Checklist**
+
 1. Repo **Settings → Pages**: **Deploy from a branch**, branch **`gh-pages`**, folder **`/ (root)`**.
 2. Push to **`main`** (or run workflow manually). Workflow: **Deploy PWA to GitHub Pages** (`.github/workflows/deploy-pwa-gh-pages.yml`).
 3. Open **`https://mapicallo.github.io/sortMySources/`** — assets use base path `/sortMySources/` (`apps/pwa/.env.production`).
