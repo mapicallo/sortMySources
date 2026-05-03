@@ -29,15 +29,21 @@ Use **Export / Import JSON** (same format as the PWA).
 
 > PWA (`https://…`) and extension (`chrome-extension://…`) use **different IndexedDB** origins. Exchange **JSON backups** to move data between them.
 
-**Privacy policy (Chrome Web Store, etc.):** if GitHub Pages uses the repo **root** as source, use  
-`https://mapicallo.github.io/sortMySources/privacy.html` (file `privacy.html` at repo root).  
-If you deploy only `apps/pwa/dist`, the same path is included after `vite build` via `public/privacy.html`.
+**Privacy policy:** included in the PWA build at `https://mapicallo.github.io/sortMySources/privacy.html` once **`gh-pages`** is deployed (source: `public/privacy.html`). There is also `privacy.html` at the repo root for listings that required it while Pages used `main`.
 
 ## Core rules (v0.2)
 
 - **Map names** are unique ignoring case; creating or renaming to a duplicate fails with a clear message.
 - **URLs** are not duplicated inside the same map: we store a **canonical http(s) form** (lowercase host, no `#fragment`, no useless trailing slash except root) and refuse adds that match an existing row.
 - Legacy rows that look like duplicates still appear as one line in the **extension panel** preview; **Remove (×)** clears every row in that map that matches the same canonical URL.
+
+## PWA on GitHub Pages
+
+The live app is **not** the repo `README`: it is built from `apps/pwa` and published by GitHub Actions to the **`gh-pages`** branch.
+
+1. Repo **Settings → Pages**: **Deploy from a branch**, branch **`gh-pages`**, folder **`/ (root)`**.
+2. Push to **`main`** (or run workflow manually). Workflow: **Deploy PWA to GitHub Pages** (`.github/workflows/deploy-pwa-gh-pages.yml`).
+3. Open **`https://mapicallo.github.io/sortMySources/`** — assets use base path `/sortMySources/` (`apps/pwa/.env.production`).
 
 ## Env (PWA GitHub Pages)
 `apps/pwa/.env.production`:
